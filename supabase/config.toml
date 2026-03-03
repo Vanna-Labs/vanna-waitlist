@@ -1,0 +1,4 @@
+project_id = "vannalab-landing"
+
+[functions.waitlist-signup]
+verify_jwt = false

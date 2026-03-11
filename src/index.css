@@ -225,19 +225,32 @@ main {
   display: grid;
   grid-template-columns: 1fr;
   gap: 3rem;
+  align-items: start;
 }
 
 .step {
   position: relative;
+  width: 100%;
+  max-width: 20rem;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .step-number {
   display: block;
+  width: 100%;
   margin-bottom: 1rem;
   font-family: "Instrument Serif", serif;
   font-size: 6rem;
   line-height: 1;
   color: color-mix(in srgb, var(--sage) 25%, transparent);
+  text-align: center;
+}
+
+.step .subsection-headline,
+.step .body-standard {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .features-grid {
@@ -409,6 +422,7 @@ main {
 
   .steps-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 2.5rem;
   }
 
   .features-grid {

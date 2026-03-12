@@ -228,127 +228,112 @@ function App() {
     };
   }, [isModalOpen]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+    if (elements.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      },
+      {
+        threshold: 0.2,
+        rootMargin: "0px 0px -10% 0px"
+      }
+    );
+
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <main>
         <section className="section hero bg-cream">
           <div className="section-container max-w-4xl">
-            <span className="badge">AI-Powered Investing Assistant</span>
-            <h1 className="hero-headline">
-              You don't know
-              <br />
-              <span className="italic">when to sell</span>
-              <br />
-              your stocks.
-            </h1>
-            <p className="body-large max-w-2xl">Because you never had a plan when you bought them.</p>
-            <p className="body-standard subtle max-w-2xl">
-              Our AI walks you through creating a real investment thesis, then monitors your portfolio and alerts you when
-              things change. Stop investing on feelings. Start investing with a plan.
-            </p>
-            <div className="cta-row">
-              <button type="button" className="btn-primary group" onClick={openModal}>
-                Start 7-day free trial
-                <span className="arrow">→</span>
-              </button>
-              <p className="small-text">Then $20/month</p>
+            <div className="hero-shell">
+              <span className="badge">For self-directed stock investors</span>
+              <h1 className="hero-headline">
+                <span>You don't know</span>
+                <span className="hero-italic">when to sell</span>
+                <span>your stocks.</span>
+              </h1>
+              <p className="hero-kicker">Because you never had a plan when you bought them.</p>
+              <div className="hero-body">
+                <p className="body-standard subtle hero-summary">
+                  Vanna is your personal investing caddie. It gives you a framework for every position, helps you make
+                  decisions for the right reasons, and evolves with you as you grow.
+                </p>
+                <div className="cta-row">
+                  <button type="button" className="btn-primary group" onClick={openModal}>
+                    Join the waitlist
+                    <span className="arrow">→</span>
+                  </button>
+                  <p className="small-text">Framework for every position.</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="section bg-white">
-          <div className="section-container max-w-6xl">
-            <h2 className="section-headline centered">How it works</h2>
-            <p className="body-large subtle centered max-w-3xl">
-              Your AI investing partner that helps you think clearly and stay disciplined
-            </p>
-            <div className="steps-grid">
-              <article className="step">
-                <span className="step-number">1</span>
-                <h3 className="subsection-headline">When you buy</h3>
-                <p className="body-standard">
-                  AI asks the right questions: why this stock, what would make you sell, and how long you plan to hold.
-                </p>
-              </article>
-              <article className="step">
-                <span className="step-number">2</span>
-                <h3 className="subsection-headline">While you hold</h3>
-                <p className="body-standard">
-                  The agent monitors news, earnings, and market conditions against your original thesis.
-                </p>
-              </article>
-              <article className="step">
-                <span className="step-number">3</span>
-                <h3 className="subsection-headline">When conditions change</h3>
-                <p className="body-standard">
-                  You get clear alerts and check-ins so you can decide confidently without constant portfolio anxiety.
-                </p>
-              </article>
+        <section className="section section-lined bg-white">
+          <div className="section-container max-w-4xl">
+            <div className="story-intro" data-reveal>
+              <span className="eyebrow">The Problem</span>
+              <h2 className="section-headline">Most investors do not have a framework for their decisions.</h2>
+            </div>
+            <div className="behavior-strip" data-reveal>
+              <div className="behavior-step">
+                <span className="behavior-number">01</span>
+                <p className="body-standard">Buy on instinct.</p>
+              </div>
+              <div className="behavior-step">
+                <span className="behavior-number">02</span>
+                <p className="body-standard">Hold on hope.</p>
+              </div>
+              <div className="behavior-step">
+                <span className="behavior-number">03</span>
+                <p className="body-standard">Rewrite the story later.</p>
+              </div>
+            </div>
+            <div className="story-grid" data-reveal>
+              <p className="body-large">
+                Without a real framework, every position becomes harder to judge once money and emotion get involved.
+              </p>
             </div>
           </div>
         </section>
 
         <section className="section bg-cream">
-          <div className="section-container max-w-6xl">
-            <h2 className="section-headline centered">What you get</h2>
-            <div className="features-grid">
-              <article className="feature-card">
-                <div className="icon-box">
-                  <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                </div>
-                <h3 className="subsection-headline">Guided thesis creation</h3>
-                <p className="body-standard">Understand why you are investing and when you would sell before pressing buy.</p>
-              </article>
-              <article className="feature-card">
-                <div className="icon-box">
-                  <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                </div>
-                <h3 className="subsection-headline">Smart alerts</h3>
-                <p className="body-standard">Get notified when events contradict your original investing reason.</p>
-              </article>
-              <article className="feature-card">
-                <div className="icon-box">
-                  <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="subsection-headline">Portfolio check-ins</h3>
-                <p className="body-standard">Simple updates on position size, rebalancing ideas, and risk exposure.</p>
-              </article>
-              <article className="feature-card">
-                <div className="icon-box">
-                  <svg className="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-                  </svg>
-                </div>
-                <h3 className="subsection-headline">Bull & bear analysis</h3>
-                <p className="body-standard">See both sides before buying so you are not investing on hype alone.</p>
-              </article>
+          <div className="section-container max-w-4xl centered" data-reveal>
+            <span className="eyebrow">Vanna</span>
+            <h2 className="section-headline">Vanna gives you that framework.</h2>
+            <p className="body-large">Your personal investing caddie.</p>
+            <div className="promise-row">
+              <p className="promise-item">Build a plan before you buy.</p>
+              <p className="promise-item">Know what matters while you hold.</p>
+              <p className="promise-item">Make clearer decisions over time.</p>
             </div>
-          </div>
-        </section>
-
-        <section className="section bg-white">
-          <div className="section-container max-w-3xl centered">
-            <h2 className="section-headline about-headline">Built by an investor who learned the hard way</h2>
-            <p className="body-large">
-              After working on AI systems at a hedge fund, I realized disciplined investing is not complicated, it is just
-              consistent. This brings that structure to beginners without jargon.
+            <p className="body-standard subtle">
+              It will not tell you what to buy. It helps you understand your positions and make better decisions around them.
             </p>
-            <p className="body-standard subtle">No secrets. No insider tricks. Just better process and better decisions.</p>
           </div>
         </section>
 
         <section className="section final-cta">
-          <div className="section-container max-w-3xl centered">
-            <h2 className="section-headline light">Stop investing on feelings</h2>
-            <p className="body-large light-subtle">Start your 7-day free trial. Then $20/month.</p>
+          <div className="section-container max-w-3xl centered" data-reveal>
+            <h2 className="section-headline light">Start investing with a framework.</h2>
+            <p className="body-large light-subtle">
+              Join the waitlist before your next position becomes another decision you cannot clearly explain.
+            </p>
             <button type="button" className="btn-inverse group" onClick={openModal}>
-              Start free trial
+              Join the waitlist
               <span className="arrow">→</span>
             </button>
           </div>

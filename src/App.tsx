@@ -31,6 +31,37 @@ const WAITLIST_API_URL = import.meta.env.VITE_WAITLIST_API_URL?.trim();
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim();
 const TURNSTILE_SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
+function getEmailValidationMessage(value: string): string {
+  const email = value.trim().toLowerCase();
+  if (!email) return "Please enter your email address.";
+  if (email.length > 320) return "Email addresses must be 320 characters or fewer.";
+
+  const parts = email.split("@");
+  if (parts.length !== 2) return "Please enter a valid email address.";
+
+  const [localPart, domain] = parts;
+  if (!localPart || !domain) return "Please enter a valid email address.";
+  if (localPart.length > 64 || domain.length > 255) return "Please enter a valid email address.";
+  if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+    return "Please enter a valid email address.";
+  }
+  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart)) {
+    return "Please enter a valid email address.";
+  }
+
+  const labels = domain.split(".");
+  if (labels.length < 2) return "Please enter a valid email address.";
+  if (labels[labels.length - 1]!.length < 2) return "Please enter a valid email address.";
+
+  const hasInvalidDomainLabel = labels.some((label) => {
+    if (!label || label.length > 63) return true;
+    if (label.startsWith("-") || label.endsWith("-")) return true;
+    return !/^[a-z0-9-]+$/i.test(label);
+  });
+
+  return hasInvalidDomainLabel ? "Please enter a valid email address." : "";
+}
+
 function loadTurnstileScript(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (window.turnstile) return Promise.resolve();
@@ -93,6 +124,8 @@ function renderBubbleText(text: string) {
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const [website, setWebsite] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -115,6 +148,8 @@ function App() {
   const openModal = () => {
     setIsModalOpen(true);
     setErrorMessage("");
+    setEmailError("");
+    setEmailTouched(false);
   };
 
   const closeModal = () => {
@@ -123,6 +158,8 @@ function App() {
       setIsSuccess(false);
       setAlreadyJoined(false);
       setEmail("");
+      setEmailError("");
+      setEmailTouched(false);
       setWebsite("");
       setErrorMessage("");
       setTurnstileToken("");
@@ -133,7 +170,13 @@ function App() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!email.trim() || isSubmitting) return;
+    if (isSubmitting) return;
+
+    const validationMessage = getEmailValidationMessage(email);
+    setEmailTouched(true);
+    setEmailError(validationMessage);
+    if (validationMessage) return;
+
     if (!WAITLIST_API_URL) {
       setErrorMessage("Waitlist is not configured yet. Add VITE_WAITLIST_API_URL and try again.");
       return;
@@ -178,6 +221,17 @@ function App() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (!emailTouched) return;
+    setEmailError(getEmailValidationMessage(value));
+  };
+
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    setEmailError(getEmailValidationMessage(email));
   };
 
   useEffect(() => {
@@ -460,9 +514,20 @@ function App() {
                     <input type="text" name="website" tabIndex={-1} value={website} onChange={(e) => setWebsite(e.target.value)} />
                   </div>
                   <input 
-                    ref={inputRef} type="email" required placeholder="name@example.com" 
-                    value={email} onChange={(e) => setEmail(e.target.value)} className="v-input" 
+                    ref={inputRef}
+                    type="email"
+                    required
+                    placeholder="name@example.com"
+                    autoComplete="email"
+                    inputMode="email"
+                    spellCheck={false}
+                    aria-invalid={emailTouched && Boolean(emailError)}
+                    value={email}
+                    onChange={(e) => handleEmailChange(e.target.value)}
+                    onBlur={handleEmailBlur}
+                    className={`v-input${emailTouched && emailError ? " is-invalid" : ""}`}
                   />
+                  {emailTouched && emailError && <p className="v-field-error">{emailError}</p>}
                   {TURNSTILE_SITE_KEY && (
                     <div className="v-turnstile-wrap">
                       <div ref={turnstileRef} />

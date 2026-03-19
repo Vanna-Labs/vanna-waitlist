@@ -49,9 +49,34 @@ function normalizeEmail(value: string | undefined): string {
   return String(value ?? "").trim().toLowerCase();
 }
 
-function isValidEmail(email: string): boolean {
-  if (!email || email.length > 320) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function getEmailValidationMessage(email: string): string | null {
+  if (!email) return "Please provide a valid email address.";
+  if (email.length > 320) return "Email addresses must be 320 characters or fewer.";
+
+  const parts = email.split("@");
+  if (parts.length !== 2) return "Please provide a valid email address.";
+
+  const [localPart, domain] = parts;
+  if (!localPart || !domain) return "Please provide a valid email address.";
+  if (localPart.length > 64 || domain.length > 255) return "Please provide a valid email address.";
+  if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+    return "Please provide a valid email address.";
+  }
+  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart)) {
+    return "Please provide a valid email address.";
+  }
+
+  const labels = domain.split(".");
+  if (labels.length < 2) return "Please provide a valid email address.";
+  if (labels[labels.length - 1]!.length < 2) return "Please provide a valid email address.";
+
+  const hasInvalidDomainLabel = labels.some((label) => {
+    if (!label || label.length > 63) return true;
+    if (label.startsWith("-") || label.endsWith("-")) return true;
+    return !/^[a-z0-9-]+$/i.test(label);
+  });
+
+  return hasInvalidDomainLabel ? "Please provide a valid email address." : null;
 }
 
 function parseOrigin(req: Request): string {
@@ -213,8 +238,9 @@ Deno.serve(async (req) => {
   }
 
   const email = normalizeEmail(payload.email);
-  if (!isValidEmail(email)) {
-    return jsonResponse(400, { ok: false, message: "Please provide a valid email address." }, origin);
+  const emailValidationMessage = getEmailValidationMessage(email);
+  if (emailValidationMessage) {
+    return jsonResponse(400, { ok: false, message: emailValidationMessage }, origin);
   }
 
   const clientIp = getClientIp(req);

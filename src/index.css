@@ -654,6 +654,13 @@ h1, h2, h3, h4, h5, h6 { margin: 0; }
   background: rgba(247,242,234,0.65); transition: border-color 0.3s ease, background 0.3s ease;
 }
 .v-input:focus { outline: none; border-color: var(--accent); background: var(--bg); }
+.v-input.is-invalid { border-color: rgba(229, 57, 53, 0.6); background: rgba(255, 244, 244, 0.9); }
+.v-field-error {
+  color: #e53935;
+  font-size: 0.92rem;
+  margin: -0.35rem 0 1rem;
+  font-weight: 500;
+}
 .v-error { color: #e53935; font-size: 0.95rem; margin-top: 1rem; font-weight: 500; text-align: center; }
 .v-success-icon { display: flex; justify-content: center; align-items: center; width: 4rem; height: 4rem; border-radius: 50%; background: rgba(0,0,0,0.05); color: var(--accent); margin: 0 auto 1.5rem; }
 .v-success-icon svg { width: 2rem; height: 2rem; }

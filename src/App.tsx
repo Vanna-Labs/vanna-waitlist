@@ -46,22 +46,22 @@ const TURNSTILE_SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api
 const DEMO_FRAMES: DemoFrame[] = [
   {
     type: "user",
-    text: "Hey, I saw AMD is getting more serious about AI chips and I'm thinking about adding it. I know they mostly make CPUs, but it feels like they could have a real come up here.",
+    text: "Hey, I saw AMD is getting more serious about AI chips, and I'm thinking about adding it. I know they mostly make CPUs, but it feels like they could really come up here.",
     delay: 1100
   },
   {
     type: "vanna",
-    text: "That makes sense. But looking at your portfolio, this would push you further into the same AI bet you already have. You already own Nvidia and TSMC, so adding AMD isn't really new exposure unless there's something specific about AMD you think you can't get from those two.",
+    text: "That makes sense. But looking at your portfolio, this would push you further into the same AI bet you already have. You already own Nvidia and TSMC, so adding AMD isn't really new exposure unless there's something specific about AMD that you think you can't get from those two.",
     delay: 2500
   },
   {
     type: "user",
-    text: "Hmm okay that makes sense, but I feel like AMD kind of maybe just gives me more exposure in the space. Like if Nvidia starts losing it, AMD is probably one of the places that gain from that, right?",
+    text: "Hmm, okay, that makes sense. But I feel like AMD kind of gives me more exposure to the space. Like, if Nvidia starts losing ground, AMD is probably one of the names that benefits from that, right?",
     delay: 1150
   },
   {
     type: "vanna",
-    text: "Okay, that makes sense. One thing I'm picking up, though, is that even if Nvidia starts losing some ground and AMD picks up some of that upside, the market may already be expecting part of that. So the better question is: what is actually special about AMD here that could matter more than people think right now? If you want, we can make that more concrete and break down the real case for AMD before you decide how you want to play it.",
+    text: "Okay, that makes sense. One thing I'm picking up, though, is that even if Nvidia starts losing some ground and AMD picks up some of that upside, the market may already be expecting part of that. So the better question is: what is actually special about AMD here that could matter more than people expect right now? If you want, we can make that more concrete and break down the real case for AMD before you decide how you want to play it.",
     delay: 2900
   }
 ];

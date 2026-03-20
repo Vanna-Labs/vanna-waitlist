@@ -27,9 +27,97 @@ type WaitlistResponse = {
   message?: string;
 };
 
+type WaitlistPersona = "individual" | "advisor_enterprise";
+
+type DemoFrame =
+  | { type: "user"; text: string; delay: number }
+  | { type: "vanna"; text: string; delay: number };
+
+type PortfolioRow = {
+  holding: string;
+  why: string;
+  understands: string;
+};
+
 const WAITLIST_API_URL = import.meta.env.VITE_WAITLIST_API_URL?.trim();
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim();
 const TURNSTILE_SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+
+const DEMO_FRAMES: DemoFrame[] = [
+  {
+    type: "user",
+    text: "Hey, I saw AMD is getting more serious about AI chips and I'm thinking about adding it. I know they mostly make CPUs, but it feels like they could have a real come up here.",
+    delay: 1100
+  },
+  {
+    type: "vanna",
+    text: "That makes sense. But looking at your portfolio, this would push you further into the same AI bet you already have. You already own Nvidia and TSMC, so adding AMD isn't really new exposure unless there's something specific about AMD you think you can't get from those two.",
+    delay: 2500
+  },
+  {
+    type: "user",
+    text: "Hmm okay that makes sense, but I feel like AMD kind of maybe just gives me more exposure in the space. Like if Nvidia starts losing it, AMD is probably one of the places that gain from that, right?",
+    delay: 1150
+  },
+  {
+    type: "vanna",
+    text: "Okay, that makes sense. One thing I'm picking up, though, is that even if Nvidia starts losing some ground and AMD picks up some of that upside, the market may already be expecting part of that. So the better question is: what is actually special about AMD here that could matter more than people think right now? If you want, we can make that more concrete and break down the real case for AMD before you decide how you want to play it.",
+    delay: 2900
+  }
+];
+
+const DEMO_RESTART_DELAY_MS = 2600;
+const DEMO_FINAL_HOLD_MS = 4200;
+
+const PERSONA_OPTIONS: Array<{
+  value: WaitlistPersona;
+  label: string;
+  detail: string;
+}> = [
+  {
+    value: "individual",
+    label: "I invest my own capital",
+    detail: "Personal portfolio and investing decisions."
+  },
+  {
+    value: "advisor_enterprise",
+    label: "I manage capital for others",
+    detail: "Client capital, books of exposure, and enterprise workflows."
+  }
+];
+
+const SAMPLE_PORTFOLIO: PortfolioRow[] = [
+  {
+    holding: "Nvidia",
+    why: "You see Nvidia as the clearest way to own the backbone of the AI buildout.",
+    understands:
+      "You build conviction around the company that feels most essential to a structural shift."
+  },
+  {
+    holding: "Microsoft",
+    why: "You want exposure to the same shift through a business with enterprise distribution and real staying power.",
+    understands:
+      "You like upside that lives inside a proven platform, not a fragile story."
+  },
+  {
+    holding: "AMD",
+    why: "You see AMD as a second expression of the same core belief behind Nvidia, with a slightly different angle.",
+    understands:
+      "When a thesis feels right, you reinforce it through related names you understand instead of leaving it as a one-name conviction."
+  },
+  {
+    holding: "Amazon",
+    why: "You want exposure to the infrastructure layer through cloud, scale, and a business that benefits as adoption deepens.",
+    understands:
+      "You are drawn to platforms that matter more as the long-term shift becomes more real."
+  }
+];
+
+const SAMPLE_PRINCIPLES = [
+  "You trust structural importance more than short-term excitement.",
+  "You prefer businesses with real staying power, not just narrative momentum.",
+  "When a thesis proves itself, you like building around it through multiple expressions that still fit your logic."
+];
 
 function getEmailValidationMessage(value: string): string {
   const email = value.trim().toLowerCase();
@@ -102,18 +190,6 @@ function readUtmParams(): Record<string, string> {
     referral
   };
 }
-type DemoFrame =
-  | { type: "user"; text: string; delay: number }
-  | { type: "vanna"; text: string; delay: number };
-
-const DEMO_FRAMES: DemoFrame[] = [
-  { type: "user",      text: "I'm thinking about buying Nvidia. AI is everywhere right now and they're basically the backbone of all of it.", delay: 1000 },
-  { type: "vanna",     text: "This actually fits a pattern you've been strong on. Your best trades have been infrastructure enablers, not application-layer bets. AMD and Microsoft followed the same logic and both worked. What would tell you the thesis broke here? If data center revenue growth slowed below a certain rate?", delay: 2600 },
-  { type: "user",      text: "Yeah. If growth dropped below 20% year over year I'd reevaluate.", delay: 1200 },
-  { type: "vanna",     text: "Got it. I'll track that and flag it if it gets close. One thing worth seeing: with what you already own, most of your portfolio is already riding the AI infrastructure thesis. Nvidia may still make sense, but it probably means sizing carefully instead of pressing the same bet too hard. Want to think through sizing?", delay: 3000 },
-];
-const DEMO_RESTART_DELAY_MS = 2800;
-const DEMO_FINAL_HOLD_MS = 5000;
 
 function renderBubbleText(text: string) {
   return text.split("\n\n").map((paragraph, index) => (
@@ -123,6 +199,7 @@ function renderBubbleText(text: string) {
 
 function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [persona, setPersona] = useState<WaitlistPersona | "">("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
@@ -145,8 +222,9 @@ function App() {
   const demoRef = useRef<HTMLDivElement | null>(null);
   const demoBodyRef = useRef<HTMLDivElement | null>(null);
 
-  const openModal = () => {
+  const openModal = (nextPersona?: WaitlistPersona) => {
     setIsModalOpen(true);
+    setPersona(nextPersona ?? "");
     setErrorMessage("");
     setEmailError("");
     setEmailTouched(false);
@@ -157,6 +235,7 @@ function App() {
     window.setTimeout(() => {
       setIsSuccess(false);
       setAlreadyJoined(false);
+      setPersona("");
       setEmail("");
       setEmailError("");
       setEmailTouched(false);
@@ -171,6 +250,11 @@ function App() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isSubmitting) return;
+
+    if (!persona) {
+      setErrorMessage("Please choose how you plan to use Vanna.");
+      return;
+    }
 
     const validationMessage = getEmailValidationMessage(email);
     setEmailTouched(true);
@@ -197,20 +281,27 @@ function App() {
           email: email.trim(),
           website: website.trim(),
           turnstileToken,
+          persona,
           source: utmParamsRef.current.utmSource || "website",
           ...utmParamsRef.current
         })
       });
 
       let payload: WaitlistResponse = {};
-      try { payload = (await response.json()) as WaitlistResponse; } catch { payload = {}; }
+      try {
+        payload = (await response.json()) as WaitlistResponse;
+      } catch {
+        payload = {};
+      }
 
       if (!response.ok) throw new Error(payload.message || "Waitlist capture failed");
       if (!payload.ok) throw new Error(payload.message || "Unable to join waitlist.");
 
       setAlreadyJoined(Boolean(payload.alreadyJoined));
       setIsSuccess(true);
-      window.setTimeout(() => { closeModal(); }, 3000);
+      window.setTimeout(() => {
+        closeModal();
+      }, 3000);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
       setErrorMessage(message);
@@ -241,7 +332,9 @@ function App() {
 
   useEffect(() => {
     if (!isModalOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") closeModal(); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeModal();
+    };
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
     return () => {
@@ -260,9 +353,17 @@ function App() {
         const widgetId = window.turnstile.render(turnstileRef.current, {
           sitekey: TURNSTILE_SITE_KEY,
           theme: "light",
-          callback: (token: string) => { setTurnstileToken(token); setErrorMessage(""); },
-          "expired-callback": () => { setTurnstileToken(""); },
-          "error-callback": () => { setTurnstileToken(""); setErrorMessage("Security check failed. Please retry."); }
+          callback: (token: string) => {
+            setTurnstileToken(token);
+            setErrorMessage("");
+          },
+          "expired-callback": () => {
+            setTurnstileToken("");
+          },
+          "error-callback": () => {
+            setTurnstileToken("");
+            setErrorMessage("Security check failed. Please retry.");
+          }
         });
         turnstileWidgetIdRef.current = widgetId;
         setTurnstileReady(true);
@@ -273,14 +374,15 @@ function App() {
     void mountTurnstile();
     return () => {
       cancelled = true;
-      if (turnstileWidgetIdRef.current && window.turnstile) { window.turnstile.remove(turnstileWidgetIdRef.current); }
+      if (turnstileWidgetIdRef.current && window.turnstile) {
+        window.turnstile.remove(turnstileWidgetIdRef.current);
+      }
       turnstileWidgetIdRef.current = null;
       setTurnstileReady(false);
       setTurnstileToken("");
     };
   }, [isModalOpen]);
 
-  // Keep scrolling scoped to the chat pane so the page never gets pulled past the section.
   useEffect(() => {
     const chatBody = demoBodyRef.current;
     if (!chatBody) return;
@@ -300,7 +402,6 @@ function App() {
     return () => window.cancelAnimationFrame(frameId);
   }, [demoRunId, demoStep, isTyping]);
 
-  // Cinematic demo driver — starts when the section scrolls into view, loops forever
   useEffect(() => {
     const el = demoRef.current;
     if (!el) return;
@@ -318,27 +419,25 @@ function App() {
       running = true;
 
       let elapsed = 600;
-      DEMO_FRAMES.forEach((frame, i) => {
-        // If it's Vanna responding, show typing first
+      DEMO_FRAMES.forEach((frame, index) => {
         if (frame.type === "vanna") {
-          const typeDelay = 800; // time spent typing
-          const tTyping = setTimeout(() => setIsTyping(true), elapsed - typeDelay);
-          const tStopTyping = setTimeout(() => setIsTyping(false), elapsed);
-          timers.push(tTyping, tStopTyping);
+          const typeDelay = 800;
+          const typingTimer = setTimeout(() => setIsTyping(true), elapsed - typeDelay);
+          const stopTypingTimer = setTimeout(() => setIsTyping(false), elapsed);
+          timers.push(typingTimer, stopTypingTimer);
         }
 
-        const t = setTimeout(() => setDemoStep(i), elapsed);
-        timers.push(t);
+        const frameTimer = setTimeout(() => setDemoStep(index), elapsed);
+        timers.push(frameTimer);
         elapsed += frame.delay;
       });
 
-      // Prepare reset animation
-      const tFade = setTimeout(() => setIsResetting(true), elapsed + DEMO_FINAL_HOLD_MS - 1000);
-      timers.push(tFade);
+      const fadeTimer = setTimeout(() => setIsResetting(true), elapsed + DEMO_FINAL_HOLD_MS - 1000);
+      timers.push(fadeTimer);
 
       const restartTimer = setTimeout(() => {
         running = false;
-        setDemoRunId(id => id + 1);
+        setDemoRunId((id) => id + 1);
         setDemoStep(-1);
         setIsResetting(false);
         setIsTyping(false);
@@ -350,12 +449,18 @@ function App() {
     }
 
     const observer = new IntersectionObserver(
-      (entries) => { if (entries[0]?.isIntersecting && !running) run(); },
+      (entries) => {
+        if (entries[0]?.isIntersecting && !running) run();
+      },
       { threshold: 0.25 }
     );
     observer.observe(el);
 
-    return () => { observer.disconnect(); clearTimers(); running = false; };
+    return () => {
+      observer.disconnect();
+      clearTimers();
+      running = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -380,140 +485,268 @@ function App() {
   return (
     <>
       <main className="v-main">
-        {/* Navigation */}
         <nav className="v-nav">
           <div className="v-logo">Vanna</div>
-          <button className="v-btn-outline" onClick={openModal}>Early Access</button>
+          <button className="v-btn-outline" onClick={() => openModal()}>
+            Request Early Access
+          </button>
         </nav>
 
-        {/* Hero Section */}
         <section className="v-hero">
           <div className="v-hero-content">
             <h1 className="v-hero-title title-reveal">
-              <span className="line-mask"><span>The private agent system</span></span>
-              <span className="line-mask"><span>for investing.</span></span>
+              <span className="line-mask">
+                <span>Understand how you invest.</span>
+              </span>
+              <span className="line-mask">
+                <span>Build judgment that scales.</span>
+              </span>
             </h1>
             <p className="v-hero-sub sub-reveal">
-              Build the case before entry. Track what matters while you hold.<br/>
-              Know exactly when to trim, add, or exit.
+              Vanna helps you see your patterns, sharpen your reasoning, and make better portfolio
+              decisions over time.
             </p>
             <div className="v-hero-cta sub-reveal delay-cta">
-              <button className="v-btn-primary" onClick={openModal}>Request Access</button>
+              <button className="v-btn-primary" onClick={() => openModal()}>
+                Request Early Access
+              </button>
             </div>
           </div>
-          {/* Animated Background Ambience */}
           <div className="v-glow-orb"></div>
         </section>
 
-        {/* Cinematic Product Demo */}
         <section className="v-tabs-section">
           <div className="v-showcase-text" data-reveal>
             <span className="v-tag">See It In Action</span>
-            <h2 className="v-h2">Your caddie, at work.</h2>
-            <p className="v-p">Watch Vanna connect a new idea to what has already worked, track what would break the thesis, and warn when the same bet is getting too crowded.</p>
+            <h2 className="v-h2">Your caddie for clearer judgment.</h2>
+            <p className="v-p">
+              Vanna does more than answer a question. It connects a new decision to the way you
+              already think, the patterns you repeat, and the risks you may not realize you are
+              compounding.
+            </p>
           </div>
 
           <div className="v-chatshell-mock" ref={demoRef} style={{ position: "relative", zIndex: 2 }} data-reveal>
             <div className="vc-header">
-              <div className="vc-dots"><span className="vc-dot red"></span><span className="vc-dot yellow"></span><span className="vc-dot green"></span></div>
+              <div className="vc-dots">
+                <span className="vc-dot red"></span>
+                <span className="vc-dot yellow"></span>
+                <span className="vc-dot green"></span>
+              </div>
               <div className="vc-title">Vanna</div>
             </div>
-            <div className={`vc-body-demo ${isResetting ? 'chat-fade-out' : ''}`} key={demoRunId} ref={demoBodyRef}>
-              {DEMO_FRAMES.slice(0, demoStep + 1).map((frame, i) => {
+            <div className={`vc-body-demo ${isResetting ? "chat-fade-out" : ""}`} key={demoRunId} ref={demoBodyRef}>
+              {DEMO_FRAMES.slice(0, demoStep + 1).map((frame, index) => {
                 if (frame.type === "user") {
                   return (
-                    <div key={i} className="vc-msg user">
+                    <div key={index} className="vc-msg user">
                       <div className="vc-bubble">{renderBubbleText(frame.text)}</div>
                     </div>
                   );
                 }
-                if (frame.type === "vanna") {
-                  return (
-                    <div key={i} className="vc-msg system">
-                      <div className="vc-avatar">V</div>
-                      <div className="vc-bubble">{renderBubbleText(frame.text)}</div>
-                    </div>
-                  );
-                }
-                return null;
+                return (
+                  <div key={index} className="vc-msg system">
+                    <div className="vc-avatar">V</div>
+                    <div className="vc-bubble">{renderBubbleText(frame.text)}</div>
+                  </div>
+                );
               })}
-              
+
               {isTyping && (
                 <div className="vc-msg system vc-typing">
                   <div className="vc-avatar">V</div>
                   <div className="vc-bubble">
-                    <span /><span /><span />
+                    <span />
+                    <span />
+                    <span />
                   </div>
                 </div>
               )}
             </div>
             <div className="vc-footer">
-              <div className="vc-input-ghost">What are you thinking about trading?</div>
+              <div className="vc-input-ghost">What are you trying to understand about this decision?</div>
             </div>
           </div>
 
           <div className="v-glow-orb" style={{ opacity: 0.15, zIndex: 0, width: "60vw", height: "60vw", top: "50%" }}></div>
         </section>
 
-        {/* 3 Value Layers - Sticky Storytelling */}
-        <section className="v-layers">
-          <div className="v-layer-intro" data-reveal>
-            <span className="v-tag">One System. Three Layers.</span>
-            <h2 className="v-h2">The caddie for self-directed investors.</h2>
-            <p className="v-p">See what you hold, build the case for every move, and learn how you invest over time.</p>
+        <section className="v-proof-section">
+          <div className="v-proof-intro" data-reveal>
+            <span className="v-tag">What Vanna Gives You</span>
+            <h2 className="v-h2">A clearer picture of how you invest.</h2>
+            <p className="v-p">
+              A live picture of how you invest, what has been working in your decision-making, and
+              where your conviction is taking shape.
+            </p>
+            <p className="v-proof-line">Understand your patterns. Build better theses. Scale better judgment.</p>
           </div>
-          
-          <div className="v-layer-grid">
-            <div className="v-layer-card" data-reveal>
-               <h3 className="v-h3">01 Portfolio Understanding</h3>
-               <p className="v-p">Know how your positions relate to each other, not just what you own. Vanna shows when three tickers are really one macro bet, so you can size with eyes open.</p>
+
+          <div className="v-proof-card" data-reveal>
+            <div className="v-proof-grid">
+              <section className="v-proof-panel v-proof-table-panel" aria-labelledby="portfolio-title">
+                <div className="v-proof-kicker">Sample Investor Profile</div>
+                <h3 className="v-proof-title" id="portfolio-title">
+                  Current Portfolio
+                </h3>
+                <table className="v-proof-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Holding</th>
+                      <th scope="col">Why you own it</th>
+                      <th scope="col">What Vanna understands</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SAMPLE_PORTFOLIO.map((row) => (
+                      <tr key={row.holding}>
+                        <td data-label="Holding" className="v-proof-holding">
+                          {row.holding}
+                        </td>
+                        <td data-label="Why you own it">{row.why}</td>
+                        <td data-label="What Vanna understands">{row.understands}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+
+              <div className="v-proof-panel v-proof-insights">
+                <section className="v-proof-block" aria-labelledby="pattern-title">
+                  <div className="v-proof-kicker">Your current pattern</div>
+                  <h3 className="v-proof-title" id="pattern-title">
+                    Conviction built around durable shifts
+                  </h3>
+                  <p>
+                    You invest best when the opportunity feels foundational, not temporary. You are
+                    drawn to businesses that sit close to the core of a major shift, and you like
+                    ideas where the logic stays intact even as the expression changes.
+                  </p>
+                </section>
+
+                <section className="v-proof-block" aria-labelledby="principles-title">
+                  <div className="v-proof-kicker">Principles Vanna has learned</div>
+                  <h3 className="v-proof-title" id="principles-title">
+                    The logic behind your strongest decisions
+                  </h3>
+                  <ul className="v-proof-principles">
+                    {SAMPLE_PRINCIPLES.map((principle) => (
+                      <li key={principle}>{principle}</li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section className="v-proof-block" aria-labelledby="meaning-title">
+                  <div className="v-proof-kicker">What this means now</div>
+                  <h3 className="v-proof-title" id="meaning-title">
+                    Vanna makes your conviction legible
+                  </h3>
+                  <p>
+                    Vanna shows why a position belongs in your portfolio, how it connects to the
+                    beliefs already driving your strongest decisions, and what kind of pattern you
+                    are reinforcing when you add something new.
+                  </p>
+                </section>
+              </div>
             </div>
-            <div className="v-layer-card" data-reveal>
-               <h3 className="v-h3">02 Thesis Creation</h3>
-               <p className="v-p">Turn instinct into a challengeable thesis. Vanna pressure-tests your reasoning, sharpens the real claim, and saves the exact logic you are committing to.</p>
+          </div>
+
+          <div className="v-enterprise-card" data-reveal>
+            <div className="v-enterprise-copy">
+              <span className="v-tag">For Advisors And Firms</span>
+              <h3 className="v-enterprise-title">The same intelligence, applied across client capital.</h3>
+              <p className="v-p">
+                Vanna Enterprise extends the same pattern recognition and judgment framework to
+                advisors and firms managing other people&apos;s money.
+              </p>
             </div>
-            <div className="v-layer-card" data-reveal>
-               <h3 className="v-h3">03 Thought &amp; Pattern Understanding</h3>
-               <p className="v-p">Learn how you actually invest over time. Vanna turns reflections, repeated behaviors, and portfolio decisions into patterns you can see, question, and improve.</p>
-            </div>
+            <button className="v-btn-outline" onClick={() => openModal("advisor_enterprise")}>
+              Looking for enterprise access?
+            </button>
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="v-footer">
           <div className="v-footer-content" data-reveal>
-            <h2 className="v-footer-title">Calmer, sharper conviction.</h2>
-            <p className="v-footer-sub">Join the waitlist for the most definitive operating system for self-directed investors.</p>
-            <button className="v-btn-primary large" onClick={openModal}>Join the Waitlist</button>
+            <h2 className="v-footer-title">Better investing starts with better self-understanding.</h2>
+            <p className="v-footer-sub">
+              Join the waitlist for Vanna, the system that turns patterns into judgment and
+              judgment into better portfolio decisions.
+            </p>
+            <button className="v-btn-primary large" onClick={() => openModal()}>
+              Request Early Access
+            </button>
           </div>
           <div className="v-watermark">VANNA</div>
         </footer>
       </main>
 
-      {/* Pristine Waitlist Modal */}
       {isModalOpen && (
         <div className="v-modal-overlay" role="presentation" onClick={closeModal}>
-          <div className="v-modal-card fade-in" role="dialog" aria-modal="true" aria-label="Waitlist signup" onClick={(e) => e.stopPropagation()}>
-            <button type="button" className="v-modal-close" onClick={closeModal} aria-label="Close">×</button>
+          <div
+            className="v-modal-card fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Waitlist signup"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" className="v-modal-close" onClick={closeModal} aria-label="Close">
+              ×
+            </button>
             {isSuccess ? (
               <div className="v-modal-success">
                 <div className="v-success-icon">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-                <h3 className="v-modal-h3">You're on the list!</h3>
+                <h3 className="v-modal-h3">You&apos;re on the list!</h3>
                 <p className="v-modal-p">
-                  {alreadyJoined ? "You're already on the waitlist. We'll keep you posted." : "We'll secure your spot in line and notify you when access is granted."}
+                  {alreadyJoined
+                    ? "You're already on the waitlist. We'll keep you posted."
+                    : "We'll reach out when the next cohort opens."}
                 </p>
               </div>
             ) : (
               <>
-                <h3 className="v-modal-h3">Early Access</h3>
-                <p className="v-modal-p">Vanna is currently heavily restricted. Request access to join the next onboarding cohort.</p>
+                <h3 className="v-modal-h3">Request Early Access</h3>
+                <p className="v-modal-p">
+                  Join the waitlist for early access to Vanna. We&apos;re onboarding in small
+                  cohorts as we refine the system.
+                </p>
                 <form className="v-form" onSubmit={handleSubmit}>
                   <div className="v-honeypot" aria-hidden="true">
-                    <input type="text" name="website" tabIndex={-1} value={website} onChange={(e) => setWebsite(e.target.value)} />
+                    <input
+                      type="text"
+                      name="website"
+                      tabIndex={-1}
+                      value={website}
+                      onChange={(event) => setWebsite(event.target.value)}
+                    />
                   </div>
-                  <input 
+
+                  <fieldset className="v-persona-fieldset">
+                    <legend className="v-persona-legend">How do you plan to use Vanna?</legend>
+                    <div className="v-persona-group" role="radiogroup" aria-label="How do you plan to use Vanna?">
+                      {PERSONA_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          className={`v-persona-option${persona === option.value ? " is-selected" : ""}`}
+                          aria-pressed={persona === option.value}
+                          onClick={() => {
+                            setPersona(option.value);
+                            setErrorMessage("");
+                          }}
+                        >
+                          <span className="v-persona-label">{option.label}</span>
+                          <span className="v-persona-detail">{option.detail}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <input
                     ref={inputRef}
                     type="email"
                     required
@@ -523,19 +756,21 @@ function App() {
                     spellCheck={false}
                     aria-invalid={emailTouched && Boolean(emailError)}
                     value={email}
-                    onChange={(e) => handleEmailChange(e.target.value)}
+                    onChange={(event) => handleEmailChange(event.target.value)}
                     onBlur={handleEmailBlur}
                     className={`v-input${emailTouched && emailError ? " is-invalid" : ""}`}
                   />
                   {emailTouched && emailError && <p className="v-field-error">{emailError}</p>}
+
                   {TURNSTILE_SITE_KEY && (
                     <div className="v-turnstile-wrap">
                       <div ref={turnstileRef} />
                       {!turnstileReady && <p className="v-small">Securing connection...</p>}
                     </div>
                   )}
+
                   <button type="submit" className="v-btn-primary full" disabled={isSubmitting}>
-                    {isSubmitting ? "Processing..." : "Secure My Spot"}
+                    {isSubmitting ? "Processing..." : "Request Access"}
                   </button>
                   {errorMessage && <p className="v-error">{errorMessage}</p>}
                 </form>

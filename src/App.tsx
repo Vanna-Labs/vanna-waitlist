@@ -123,6 +123,7 @@ function getEmailValidationMessage(value: string): string {
   const email = value.trim().toLowerCase();
   if (!email) return "Please enter your email address.";
   if (email.length > 320) return "Email addresses must be 320 characters or fewer.";
+  if (/\s/.test(email)) return "Please enter a valid email address.";
 
   const parts = email.split("@");
   if (parts.length !== 2) return "Please enter a valid email address.";
@@ -130,24 +131,11 @@ function getEmailValidationMessage(value: string): string {
   const [localPart, domain] = parts;
   if (!localPart || !domain) return "Please enter a valid email address.";
   if (localPart.length > 64 || domain.length > 255) return "Please enter a valid email address.";
-  if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
-    return "Please enter a valid email address.";
-  }
-  if (!/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(localPart)) {
+  if (!domain.includes(".") || domain.startsWith(".") || domain.endsWith(".") || domain.includes("..")) {
     return "Please enter a valid email address.";
   }
 
-  const labels = domain.split(".");
-  if (labels.length < 2) return "Please enter a valid email address.";
-  if (labels[labels.length - 1]!.length < 2) return "Please enter a valid email address.";
-
-  const hasInvalidDomainLabel = labels.some((label) => {
-    if (!label || label.length > 63) return true;
-    if (label.startsWith("-") || label.endsWith("-")) return true;
-    return !/^[a-z0-9-]+$/i.test(label);
-  });
-
-  return hasInvalidDomainLabel ? "Please enter a valid email address." : "";
+  return "";
 }
 
 function loadTurnstileScript(): Promise<void> {

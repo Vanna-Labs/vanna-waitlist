@@ -7,8 +7,11 @@ type TurnstileResult = {
   "error-codes"?: string[];
 };
 
+type WaitlistPersona = "individual" | "advisor_enterprise";
+
 type WaitlistRequest = {
   email?: string;
+  persona?: string;
   source?: string;
   utmSource?: string;
   utmMedium?: string;
@@ -43,6 +46,15 @@ function truncate(value: string | null | undefined, maxLength = 255): string | n
   const normalized = value.trim();
   if (!normalized) return null;
   return normalized.slice(0, maxLength);
+}
+
+function normalizePersona(value: string | undefined): WaitlistPersona | null {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === "individual" || normalized === "advisor_enterprise") {
+    return normalized;
+  }
+  return null;
 }
 
 function normalizeEmail(value: string | undefined): string {
@@ -285,7 +297,7 @@ Deno.serve(async (req) => {
 
   const { data: existingRow, error: existingError } = await supabase
     .from("waitlist_signups")
-    .select("id, signups_count")
+    .select("id, signups_count, metadata")
     .eq("email", email)
     .maybeSingle();
 
@@ -296,6 +308,7 @@ Deno.serve(async (req) => {
 
   const nowIso = new Date().toISOString();
   const source = truncate(payload.source, 120) ?? "website";
+  const persona = normalizePersona(payload.persona);
   const sharedFields = {
     source,
     utm_source: truncate(payload.utmSource, 255),
@@ -308,12 +321,25 @@ Deno.serve(async (req) => {
     ip_hash: ipHash,
     user_agent: userAgent
   };
+  const metadataPatch = {
+    origin,
+    captured_at: nowIso,
+    ...(persona ? { persona } : {})
+  };
 
   if (existingRow) {
+    const existingMetadata =
+      existingRow.metadata && typeof existingRow.metadata === "object" && !Array.isArray(existingRow.metadata)
+        ? existingRow.metadata
+        : {};
     const { error: updateError } = await supabase
       .from("waitlist_signups")
       .update({
         ...sharedFields,
+        metadata: {
+          ...existingMetadata,
+          ...metadataPatch
+        },
         signups_count: (existingRow.signups_count ?? 1) + 1,
         last_seen_at: nowIso
       })
@@ -332,10 +358,7 @@ Deno.serve(async (req) => {
     ...sharedFields,
     first_seen_at: nowIso,
     last_seen_at: nowIso,
-    metadata: {
-      origin,
-      captured_at: nowIso
-    }
+    metadata: metadataPatch
   });
 
   if (insertError) {

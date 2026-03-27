@@ -17,6 +17,7 @@ dist-ssr
 landing-page---beginner-investing-agent/
 *:Zone.Identifier
 supabase/.temp/
+.worktrees/
 
 # Editor directories and files
 .vscode/*

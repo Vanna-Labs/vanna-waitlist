@@ -90,26 +90,22 @@ const SAMPLE_PORTFOLIO: PortfolioRow[] = [
   {
     holding: "Nvidia",
     why: "You see Nvidia as the clearest way to own the backbone of the AI buildout.",
-    understands:
-      "You build conviction around the company that feels most essential to a structural shift."
+    understands: "You build conviction around the company most essential to a structural shift."
   },
   {
     holding: "Microsoft",
-    why: "You want exposure to the same shift through a business with enterprise distribution and real staying power.",
-    understands:
-      "You like upside that lives inside a proven platform, not a fragile story."
+    why: "You want exposure to the same shift through a durable business with enterprise reach.",
+    understands: "You prefer upside inside a proven platform, not a fragile story."
   },
   {
     holding: "AMD",
-    why: "You see AMD as a second expression of the same core belief behind Nvidia, with a slightly different angle.",
-    understands:
-      "When a thesis feels right, you reinforce it through related names you understand instead of leaving it as a one-name conviction."
+    why: "You see AMD as a second expression of the same core AI belief behind Nvidia.",
+    understands: "When a thesis feels right, you reinforce it through related names you understand."
   },
   {
     holding: "Amazon",
-    why: "You want exposure to the infrastructure layer through cloud, scale, and a business that benefits as adoption deepens.",
-    understands:
-      "You are drawn to platforms that matter more as the long-term shift becomes more real."
+    why: "You want exposure through cloud, scale, and a business that benefits as adoption deepens.",
+    understands: "You are drawn to platforms that matter more as the long-term shift becomes real."
   }
 ];
 
@@ -388,7 +384,7 @@ function App() {
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [demoRunId, demoStep, isTyping]);
+  }, [demoRunId, demoStep]);
 
   useEffect(() => {
     const el = demoRef.current;
@@ -503,62 +499,6 @@ function App() {
           <div className="v-glow-orb"></div>
         </section>
 
-        <section className="v-tabs-section">
-          <div className="v-showcase-text" data-reveal>
-            <span className="v-tag">See It In Action</span>
-            <h2 className="v-h2">Your caddie for clearer judgment.</h2>
-            <p className="v-p">
-              Vanna does more than answer a question. It connects a new decision to the way you
-              already think, the patterns you repeat, and the risks you may not realize you are
-              compounding.
-            </p>
-          </div>
-
-          <div className="v-chatshell-mock" ref={demoRef} style={{ position: "relative", zIndex: 2 }} data-reveal>
-            <div className="vc-header">
-              <div className="vc-dots">
-                <span className="vc-dot red"></span>
-                <span className="vc-dot yellow"></span>
-                <span className="vc-dot green"></span>
-              </div>
-              <div className="vc-title">Vanna</div>
-            </div>
-            <div className={`vc-body-demo ${isResetting ? "chat-fade-out" : ""}`} key={demoRunId} ref={demoBodyRef}>
-              {DEMO_FRAMES.slice(0, demoStep + 1).map((frame, index) => {
-                if (frame.type === "user") {
-                  return (
-                    <div key={index} className="vc-msg user">
-                      <div className="vc-bubble">{renderBubbleText(frame.text)}</div>
-                    </div>
-                  );
-                }
-                return (
-                  <div key={index} className="vc-msg system">
-                    <div className="vc-avatar">V</div>
-                    <div className="vc-bubble">{renderBubbleText(frame.text)}</div>
-                  </div>
-                );
-              })}
-
-              {isTyping && (
-                <div className="vc-msg system vc-typing">
-                  <div className="vc-avatar">V</div>
-                  <div className="vc-bubble">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="vc-footer">
-              <div className="vc-input-ghost">What are you trying to understand about this decision?</div>
-            </div>
-          </div>
-
-          <div className="v-glow-orb" style={{ opacity: 0.15, zIndex: 0, width: "60vw", height: "60vw", top: "50%" }}></div>
-        </section>
-
         <section className="v-proof-section">
           <div className="v-proof-intro" data-reveal>
             <span className="v-tag">What Vanna Gives You</span>
@@ -571,74 +511,132 @@ function App() {
           </div>
 
           <div className="v-proof-card" data-reveal>
-            <div className="v-proof-grid">
-              <section className="v-proof-panel v-proof-table-panel" aria-labelledby="portfolio-title">
-                <div className="v-proof-kicker">Sample Investor Profile</div>
-                <h3 className="v-proof-title" id="portfolio-title">
-                  Current Portfolio
-                </h3>
-                <table className="v-proof-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Holding</th>
-                      <th scope="col">Why you own it</th>
-                      <th scope="col">What Vanna understands</th>
+            <section className="v-proof-panel v-proof-table-panel" aria-labelledby="portfolio-title">
+              <div className="v-proof-kicker">Sample Investor Profile</div>
+              <h3 className="v-proof-title" id="portfolio-title">
+                Current Portfolio
+              </h3>
+              <table className="v-proof-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Holding</th>
+                    <th scope="col">Why you own it</th>
+                    <th scope="col">What Vanna understands</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {SAMPLE_PORTFOLIO.map((row) => (
+                    <tr key={row.holding}>
+                      <td data-label="Holding" className="v-proof-holding">
+                        {row.holding}
+                      </td>
+                      <td data-label="Why you own it">{row.why}</td>
+                      <td data-label="What Vanna understands">{row.understands}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {SAMPLE_PORTFOLIO.map((row) => (
-                      <tr key={row.holding}>
-                        <td data-label="Holding" className="v-proof-holding">
-                          {row.holding}
-                        </td>
-                        <td data-label="Why you own it">{row.why}</td>
-                        <td data-label="What Vanna understands">{row.understands}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+
+            <div className="v-proof-insights-grid">
+              <section className="v-proof-block" aria-labelledby="pattern-title">
+                <div className="v-proof-kicker">Your current pattern</div>
+                <h3 className="v-proof-title" id="pattern-title">
+                  Conviction built around durable shifts
+                </h3>
+                <p>
+                  You invest best when the opportunity feels foundational, not temporary. You are
+                  drawn to businesses that sit close to the core of a major shift, and you like
+                  ideas where the logic stays intact even as the expression changes.
+                </p>
               </section>
 
-              <div className="v-proof-panel v-proof-insights">
-                <section className="v-proof-block" aria-labelledby="pattern-title">
-                  <div className="v-proof-kicker">Your current pattern</div>
-                  <h3 className="v-proof-title" id="pattern-title">
-                    Conviction built around durable shifts
-                  </h3>
-                  <p>
-                    You invest best when the opportunity feels foundational, not temporary. You are
-                    drawn to businesses that sit close to the core of a major shift, and you like
-                    ideas where the logic stays intact even as the expression changes.
-                  </p>
-                </section>
+              <section className="v-proof-block" aria-labelledby="principles-title">
+                <div className="v-proof-kicker">Principles Vanna has learned</div>
+                <h3 className="v-proof-title" id="principles-title">
+                  The logic behind your strongest decisions
+                </h3>
+                <ul className="v-proof-principles">
+                  {SAMPLE_PRINCIPLES.map((principle) => (
+                    <li key={principle}>{principle}</li>
+                  ))}
+                </ul>
+              </section>
 
-                <section className="v-proof-block" aria-labelledby="principles-title">
-                  <div className="v-proof-kicker">Principles Vanna has learned</div>
-                  <h3 className="v-proof-title" id="principles-title">
-                    The logic behind your strongest decisions
-                  </h3>
-                  <ul className="v-proof-principles">
-                    {SAMPLE_PRINCIPLES.map((principle) => (
-                      <li key={principle}>{principle}</li>
-                    ))}
-                  </ul>
-                </section>
+              <section className="v-proof-block" aria-labelledby="meaning-title">
+                <div className="v-proof-kicker">What this means now</div>
+                <h3 className="v-proof-title" id="meaning-title">
+                  Vanna makes your conviction legible
+                </h3>
+                <p>
+                  Vanna shows why a position belongs in your portfolio, how it connects to the
+                  beliefs already driving your strongest decisions, and what kind of pattern you
+                  are reinforcing when you add something new.
+                </p>
+              </section>
+            </div>
+          </div>
+        </section>
 
-                <section className="v-proof-block" aria-labelledby="meaning-title">
-                  <div className="v-proof-kicker">What this means now</div>
-                  <h3 className="v-proof-title" id="meaning-title">
-                    Vanna makes your conviction legible
-                  </h3>
-                  <p>
-                    Vanna shows why a position belongs in your portfolio, how it connects to the
-                    beliefs already driving your strongest decisions, and what kind of pattern you
-                    are reinforcing when you add something new.
-                  </p>
-                </section>
+        <section className="v-tabs-section">
+          <div className="v-showcase-text" data-reveal>
+            <span className="v-tag">How Vanna Gets There</span>
+            <h2 className="v-h2">See the reasoning happen.</h2>
+            <p className="v-p">
+              The conversation is the evidence trail. Vanna challenges the idea, compares it to
+              what you already own, and helps surface whether you are refining a thesis or just
+              crowding into the same bet.
+            </p>
+          </div>
+
+          <div className="v-chatshell-mock" ref={demoRef} style={{ position: "relative", zIndex: 2 }} data-reveal>
+            <div className="vc-header">
+              <div className="vc-dots">
+                <span className="vc-dot red"></span>
+                <span className="vc-dot yellow"></span>
+                <span className="vc-dot green"></span>
               </div>
+              <div className="vc-title">Vanna</div>
+            </div>
+            <div className={`vc-demo-stage ${isResetting ? "chat-fade-out" : ""}`} key={demoRunId}>
+              <div className="vc-body-demo" ref={demoBodyRef}>
+                {DEMO_FRAMES.slice(0, demoStep + 1).map((frame, index) => {
+                  if (frame.type === "user") {
+                    return (
+                      <div key={index} className="vc-msg user">
+                        <div className="vc-bubble">{renderBubbleText(frame.text)}</div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={index} className="vc-msg system">
+                      <div className="vc-avatar">V</div>
+                      <div className="vc-bubble">{renderBubbleText(frame.text)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={`vc-typing-slot${isTyping ? " is-visible" : ""}`} aria-hidden={!isTyping}>
+                <div className="vc-msg system vc-typing">
+                  <div className="vc-avatar">V</div>
+                  <div className="vc-bubble">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="vc-footer">
+              <div className="vc-input-ghost">What are you trying to understand about this decision?</div>
             </div>
           </div>
 
+          <div className="v-glow-orb" style={{ opacity: 0.15, zIndex: 0, width: "60vw", height: "60vw", top: "50%" }}></div>
+        </section>
+
+        <section className="v-enterprise-section">
           <div className="v-enterprise-card" data-reveal>
             <div className="v-enterprise-copy">
               <span className="v-tag">For Advisors And Firms</span>

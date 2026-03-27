@@ -546,8 +546,8 @@ function App() {
                 </h3>
                 <p>
                   You invest best when the opportunity feels foundational, not temporary. You are
-                  drawn to businesses that sit close to the core of a major shift, and you like
-                  ideas where the logic stays intact even as the expression changes.
+                  drawn to businesses close to the core of a major shift, and you like ideas where
+                  the logic holds even as the expression changes.
                 </p>
               </section>
 
@@ -561,18 +561,6 @@ function App() {
                     <li key={principle}>{principle}</li>
                   ))}
                 </ul>
-              </section>
-
-              <section className="v-proof-block" aria-labelledby="meaning-title">
-                <div className="v-proof-kicker">What this means now</div>
-                <h3 className="v-proof-title" id="meaning-title">
-                  Vanna makes your conviction legible
-                </h3>
-                <p>
-                  Vanna shows why a position belongs in your portfolio, how it connects to the
-                  beliefs already driving your strongest decisions, and what kind of pattern you
-                  are reinforcing when you add something new.
-                </p>
               </section>
             </div>
           </div>
